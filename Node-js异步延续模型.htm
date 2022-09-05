@@ -1,0 +1,291 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>Nodejs异步延续模型 | Anthony's Blog</title><meta name="keywords" content="Linux,Nodejs,异步延续模型"><meta name="author" content="HaoDong Wu"><meta name="copyright" content="HaoDong Wu"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="异步执行在 Node.js 中是非常基本的操作，但是一个 &#96;Uncaught Exception&#96; 的报错就可能让我们摸不着头脑，是什么地址的 TLS 访问 &#96;ECONNRESET&#96; 了？">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Nodejs异步延续模型">
+<meta property="og:url" content="https://www.scery.com/Node-js%E5%BC%82%E6%AD%A5%E5%BB%B6%E7%BB%AD%E6%A8%A1%E5%9E%8B.htm">
+<meta property="og:site_name" content="Anthony&#39;s Blog">
+<meta property="og:description" content="异步执行在 Node.js 中是非常基本的操作，但是一个 &#96;Uncaught Exception&#96; 的报错就可能让我们摸不着头脑，是什么地址的 TLS 访问 &#96;ECONNRESET&#96; 了？">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
+<meta property="article:published_time" content="2020-09-25T00:16:25.000Z">
+<meta property="article:modified_time" content="2022-09-03T11:49:34.699Z">
+<meta property="article:author" content="HaoDong Wu">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="Nodejs">
+<meta property="article:tag" content="异步延续模型">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"><link rel="shortcut icon" href="/img/avatar.png"><link rel="canonical" href="https://www.scery.com/Node-js%E5%BC%82%E6%AD%A5%E5%BB%B6%E7%BB%AD%E6%A8%A1%E5%9E%8B.htm"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><meta name="baidu-site-verification" content="code-cOpY18SESu"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Nodejs异步延续模型',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2022-09-03 19:49:34'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 5.4.2"><link rel="alternate" href="/atom.xml" title="Anthony's Blog" type="application/atom+xml">
+</head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/img/avatar.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">38</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">55</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">60</div></a></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">Anthony's Blog</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Nodejs异步延续模型</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-09-25T00:16:25.000Z" title="发表于 2020-09-25 08:16:25">2020-09-25</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-09-03T11:49:34.699Z" title="更新于 2022-09-03 19:49:34">2022-09-03</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Linux/">Linux</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Linux/Nodejs/">Nodejs</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Linux/Nodejs/%E5%BC%82%E6%AD%A5%E5%BB%B6%E7%BB%AD%E6%A8%A1%E5%9E%8B/">异步延续模型</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">3.8k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>13分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Nodejs异步延续模型"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1 id="Node-js异步延续模型"><a href="#Node-js异步延续模型" class="headerlink" title="Node.js异步延续模型"></a>Node.js异步延续模型</h1><figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line">[<span class="attr">node</span>:<span class="number">12345</span>] <span class="title class_">Uncaught</span> <span class="title class_">Exception</span>: <span class="title class_">Error</span>: read <span class="variable constant_">ECONNRESET</span></span><br><span class="line">   at <span class="title class_">TLSWrap</span>.<span class="property">onStreamRead</span> (internal/stream_base_commons.<span class="property">js</span>:<span class="number">111</span>:<span class="number">27</span>)</span><br><span class="line">   <span class="comment">// 真的没了</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="https://pic-1257960926.cos.ap-guangzhou.myqcloud.com/blog/641.png" alt="641"></p>
+<h2 id="异步延续模型"><a href="#异步延续模型" class="headerlink" title="异步延续模型"></a>异步延续模型</h2><p>Node.js 使用的 JavaScript 单线程执行模型简化了非常多的问题。而为了防止 IO 阻塞 JavaScript 执行线程，IO 操作在关联了 JavaScript 回调函数后就被放入了后台处理。当 IO 操作完成后，与其关联的 JavaScript 回调会被放入事件队列等待在 JavaScript 线程调用，可以在这里[链接1]了解更多 Node.js 事件循环的详情。</p>
+<p>这个模型有很多好处，但是也有一个关键的挑战：异步资源与操作的上下文管理。什么是异步操作上下文？异步操作的上下文就是给定一个异步操作，我们能够通过异步上下文知道这个异步操作是因为什么触发执行的，接下来可以触发其他什么异步操作。Semantics of Asynchronous JavaScript [链接2] 通过非常精确的描述方法描述了异步资源的“上下文”，但是我们只想回答一个问题，在程序的任意一个执行时间点，“我们是通过什么样的异步函数执行路径执行到现在这个代码位置的”？</p>
+<p>为了回答这个问题，我们先明确几个关键点：</p>
+<ul>
+<li>执行桢 (Execution Frame) - 执行桢是程序中后继函数的一次执行过程。可以把执行桢当作从一个特定的函数执行桢被推入执行栈开始，直到这个执行桢执行结束被弹出调用栈，这样一段时间片段。不是所有的函数都是后继函数 (Continuation)，一个特定的后继函数可以被调用多次，每一次执行都对应一个独立的执行桢。</li>
+<li>后继函数 (Continuation) - 后继函数是在执行桢中创建的 JavaScript 函数，并且会在后续被作为异步回调执行。当被调用时，后继函数会创建一个独立的执行桢。比如当我们调用 <code>setTimeout(function c() &#123;&#125;, 1000)</code>，<code>setTimeout</code> 是在一个执行桢里被调用的，并且以一个后继函数 <code>c</code> 作为参数。当 <code>c</code> 在计时到时后被执行时，会创建一个新的执行桢；当 <code>c</code> 执行结束时，即意味着这个新创建的执行桢执行结束。</li>
+<li>后继点 (Continuration Point) - 后继点是接受一个后继函数作为参数的函数。通常在 JavaScript 中后继点都是宿主环境定义的（ECMAScript 规范中中不存在与 IO 相关的操作的定义）。比如 <code>setTimeout</code>，也包括 <code>Promise.then</code>。值得注意的是，不是所有接收函数作为参数的函数都是后继点，作为后继点，这些函数参数需要被异步调用，即不在当前执行桢被调用执行。比如 <code>Array.prototype.forEach</code> 就不算后继点。</li>
+<li>链接点 (Link Point) - 程序运行中，当一个后继点被调用时，我们称为链接点。这个时候需要在当前执行桢与被作为参数传入的后继函数之间创建一个逻辑连接，作为上下文绑定。</li>
+<li>就绪点 (Ready Point) - 就绪点是程序运行中之前链接过的后继函数被标记为“准备就绪”，准备被执行。这个过程会在后继函数与当前执行桢之间建立逻辑连接，这个逻辑连接可以称为因果关系。通常就绪点都需要在链接点后才能产生，但是 Promise 在这里的处理不太一样，promise 可以在他的 Promise 链中的前置的 promise 被 resolve 时产生一个就绪点，而此时不一定需要已经生成链接点（绑定回调函数），如 <code>new Promise(res =&gt; res())</code> 立刻创建了一个已经 resolve 的 Promise，此时已经触发了就绪点，但是我们还未通过 <code>.then</code> 链接上下一个 Promise。</li>
+</ul>
+<p>而上述几个关键点可以总结为以下几个事件：</p>
+<ul>
+<li>执行开始 (<code>executionBegin</code>): 表示一个执行桢开始执行；</li>
+<li>链接 (<code>link</code>): 表示一个后继点被调用，一个后继函数被放入等待队列等待就绪；</li>
+<li>就绪 (<code>ready</code>): 表示一个就绪点被触发；</li>
+<li>执行结束 (<code>executionEnd</code>): 表示一个执行桢执行完毕。</li>
+</ul>
+<p>这里我们以下面这段代码举个例子：</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;starting&#x27;</span>);</span><br><span class="line"><span class="title class_">Promise</span> p = <span class="keyword">new</span> <span class="title class_">Promise</span>(<span class="function">(<span class="params">reject, resolve</span>) =&gt;</span> &#123;</span><br><span class="line"> <span class="built_in">setTimeout</span>(<span class="keyword">function</span> <span class="title function_">f1</span>(<span class="params"></span>) &#123;</span><br><span class="line">   <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;resolving promise&#x27;</span>);</span><br><span class="line">   <span class="title function_">resolve</span>();</span><br><span class="line">&#125;, <span class="number">100</span>);</span><br><span class="line">&#125;);</span><br><span class="line">p.<span class="title function_">then</span>(<span class="keyword">function</span> <span class="title function_">f2</span>(<span class="params"></span>) &#123;</span><br><span class="line"> <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;in then&#x27;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>这段代码可以通过以下的事件流描述整个异步执行过程：</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line">&#123; <span class="string">&quot;event&quot;</span>: <span class="string">&quot;executionBegin&quot;</span>, <span class="string">&quot;executeID&quot;</span>: <span class="number">0</span> &#125; <span class="comment">// 程序开始执行</span></span><br><span class="line"><span class="comment">// starting</span></span><br><span class="line">&#123; <span class="string">&quot;event&quot;</span>: <span class="string">&quot;link&quot;</span>, <span class="string">&quot;executeID&quot;</span>: <span class="number">0</span>, <span class="string">&quot;linkID&quot;</span>: <span class="number">1</span>&#125; <span class="comment">// `f1()` 已经被链接到了 &quot;setTimeout()&quot; 的调用上</span></span><br><span class="line">&#123; <span class="string">&quot;event&quot;</span>: <span class="string">&quot;link&quot;</span>, <span class="string">&quot;executeID&quot;</span>: <span class="number">0</span>, <span class="string">&quot;linkID&quot;</span>: <span class="number">2</span>&#125; <span class="comment">// `f2()` 已经被链接到了 &quot;p.then()&quot; 的调用上</span></span><br><span class="line">&#123; <span class="string">&quot;event&quot;</span>: <span class="string">&quot;executionEnd&quot;</span>, <span class="string">&quot;executeID&quot;</span>: <span class="number">0</span> &#125; <span class="comment">// 程序外层代码执行完毕</span></span><br><span class="line"></span><br><span class="line">&#123; <span class="string">&quot;event&quot;</span>: <span class="string">&quot;ready&quot;</span>, <span class="string">&quot;executeID&quot;</span>: <span class="number">0</span>, <span class="string">&quot;linkID&quot;</span>: <span class="number">1</span>, <span class="string">&quot;readyID&quot;</span>: <span class="number">3</span> &#125; <span class="comment">// 100ms 计时到时，执行就绪</span></span><br><span class="line">&#123; <span class="string">&quot;event&quot;</span>: <span class="string">&quot;executionBegin&quot;</span>, <span class="string">&quot;executeID&quot;</span>: <span class="number">4</span>, <span class="string">&quot;readyID&quot;</span>: <span class="number">3</span> &#125; <span class="comment">// f1() 回调开始执行</span></span><br><span class="line"><span class="comment">// resolving promise</span></span><br><span class="line">&#123; <span class="string">&quot;event&quot;</span>: <span class="string">&quot;ready&quot;</span>, <span class="string">&quot;executeID&quot;</span>: <span class="number">4</span>, <span class="string">&quot;linkID&quot;</span>: <span class="number">2</span>, <span class="string">&quot;readyID&quot;</span>: <span class="number">5</span> &#125; <span class="comment">// promise p 被 resolve，标记了 &quot;then(function f2()...&quot; 就绪</span></span><br><span class="line">&#123; <span class="string">&quot;event&quot;</span>: <span class="string">&quot;executionEnd&quot;</span>, <span class="string">&quot;executeID&quot;</span>: <span class="number">4</span> &#125; <span class="comment">// f1() 回调执行完毕</span></span><br><span class="line"></span><br><span class="line">&#123; <span class="string">&quot;event&quot;</span>: <span class="string">&quot;executionBegin&quot;</span>, <span class="string">&quot;executeID&quot;</span>: <span class="number">6</span>, <span class="string">&quot;readyID&quot;</span>: <span class="number">5</span> &#125; <span class="comment">// f2() 回调开始执行</span></span><br><span class="line"><span class="comment">// in then</span></span><br><span class="line">&#123; <span class="string">&quot;event&quot;</span>: <span class="string">&quot;executionEnd&quot;</span>, <span class="string">&quot;executeID&quot;</span>: <span class="number">6</span> &#125; <span class="comment">// f2() 回调执行完毕</span></span><br></pre></td></tr></table></figure>
+
+<p>现有技术</p>
+<h3 id="async-hooks"><a href="#async-hooks" class="headerlink" title="async_hooks"></a><code>async_hooks</code></h3><p><code>async_hooks</code> 即是 Node.js 对上述模型的实现。其中 <code>async_hooks</code> API 提供了几个异步阶段的钩子回调可以注册：</p>
+<ul>
+<li><code>[init(asyncId, type, triggerAsyncId, resource): void](https://nodejs.org/api/async_hooks.html#async_hooks_init_asyncid_type_triggerasyncid_resource)</code> - 表示 asyncId 对应的异步资源（可以理解为上文中的异步上下文）初始化完成，后续这个资源可以触发异步回调（不绝对会触发，比如一个 HTTP Server 启动后没人来请求）；</li>
+<li><code>[before(asyncId): void](https://nodejs.org/api/async_hooks.html#async_hooks_before_asyncid)</code> - 表示准备开始执行异步回调函数，而在这个异步回调函数的执行桢中，生成的任意异步资源（相当于上文中的后继函数）都会与 asyncId 参数对应的异步资源链接，作为触发原因；</li>
+<li><code>[after(asyncId): void](https://nodejs.org/api/async_hooks.html#async_hooks_after_asyncid)</code> - 表示异步回调函数执行完毕，停止将asyncId 参数关联的异步资源与当前执行桢新创建的异步资源链接；</li>
+<li><code>[destroy(asyncId): void](https://nodejs.org/api/async_hooks.html#async_hooks_destroy_asyncid)</code> - 表示 asyncId 参数对应的 异步资源被回收，后续不可能再通过这个异步资源触发回调。</li>
+</ul>
+<h3 id="与-domain-的区别"><a href="#与-domain-的区别" class="headerlink" title="与 domain 的区别"></a>与 <code>domain</code> 的区别</h3><p>部分了解、使用过 <code>domain</code> 模块的同学可能会有一个疑问，<code>async_hooks</code> API 与被废弃的 <code>domain</code> 有什么区别？</p>
+<p><code>async_hooks</code> 作为上述异步模型中将各个异步资源链接起来的黏合剂，其本身并不提供任何错误处理相关的 API，他的 API 语义也非常清晰，只是对于异步资源的执行事件的描述。而 <code>domain</code> 的主要用途是异步错误的处理，但是因为在 <code>domain</code> 提出的时候还不存在 <code>async_hooks</code>，并且对于异步资源、异步执行的语义定义并不清晰，从而导致实际生产中 <code>domain</code> 的使用非常容易导致错误并且难以排查（多个 <code>domain</code> 的使用方其中如果使用了不是那么正确的方法，会将 <code>domain</code> 的状态搅得一团糟）。</p>
+<p>而在 <code>async_hooks</code> 实现了明确的异步资源与执行的语义后，<code>domain</code> 的实现也进行了迁移、使用 <code>async_hooks</code> 来实现对于异步资源回调的追踪（实现详情可以了解 PR[链接3]）。</p>
+<h3 id="Node-js-Add-on-的兼容性"><a href="#Node-js-Add-on-的兼容性" class="headerlink" title="Node.js Add-on 的兼容性"></a>Node.js Add-on 的兼容性</h3><p>虽然 Node.js 提供的 IO 操作的异步回调都已经被妥善地封装了异步调用的上下文切换，但是 Node.js 还提供了 C/C++ Add-on 的 API，这些 Add-on 普通的 <code>napi_call_function</code> 调用并不会被当成是一个新的执行桢，就如同一个 JavaScript 函数中调用另一个 JavaScript 函数。但是如果 Add-on 在异步回调中也简单地使用 <code>napi_call_function</code> 就有可能导致 async_hooks 所提供的异步资源 API 出现漏洞。所以 Add-on 需要按照 async_hooks 提供的钩子的语义，在各个关键时间点通过异步资源 API 注册上，即可完善整个异步调用链路。但是这样会给 Add-on 开发过程造成了一定的负担，而为了降低 Add-on 开发过程出现纰漏的可能。N-API 提供了线程安全的回调 JavaScript 线程的 <code>napi_threadsafe_function</code> 机制，并且已经与异步资源绑定，不需要我们再关心异步资源的事件管理。</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line">#include &lt;assert.<span class="property">h</span>&gt;</span><br><span class="line">#include &lt;node_api.<span class="property">h</span>&gt;</span><br><span class="line"></span><br><span class="line"><span class="keyword">void</span> <span class="title function_">async_call_js</span>(<span class="params">napi_env env,</span></span><br><span class="line"><span class="params">                  napi_value js_callback,</span></span><br><span class="line"><span class="params">                  <span class="keyword">void</span>* context,</span></span><br><span class="line"><span class="params">                  <span class="keyword">void</span>* data</span>)</span><br><span class="line">&#123;</span><br><span class="line"> napi_status status;</span><br><span class="line"> <span class="comment">// 将 data 转换成 JavaScript 值</span></span><br><span class="line"> napi_value value = <span class="title function_">transform</span>(env, data);</span><br><span class="line"> napi_value recv;</span><br><span class="line"> status = <span class="title function_">napi_get_null</span>(env, &amp;recv);</span><br><span class="line"> <span class="title function_">assert</span>(status == napi_ok);</span><br><span class="line"> <span class="comment">// N-API 已经为我们绑定了异步资源，这里可以安全地使用 `napi_call_function`</span></span><br><span class="line"> napi_value ret;</span><br><span class="line"> status = <span class="title function_">napi_call_function</span>(env, recv, js_callback, <span class="number">1</span>, &amp;value, &amp;ret);</span><br><span class="line"> <span class="title function_">assert</span>(status == napi_ok);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 会在工作线程被调用的工作函数</span></span><br><span class="line"><span class="keyword">void</span> <span class="title function_">do_work</span>(<span class="params">napi_threadsafe_function tsfn</span>)</span><br><span class="line">&#123;</span><br><span class="line"> <span class="comment">/** work, work. */</span></span><br><span class="line"> napi_status status = <span class="title function_">napi_call_threadsafe_function</span>(tsfn, data, napi_tsfn_nonblocking);</span><br><span class="line"> <span class="title function_">assert</span>(status == napi_ok);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">napi_value <span class="title function_">some_module_method</span>(<span class="params">napi_env env, napi_callback_info info</span>)</span><br><span class="line">&#123;</span><br><span class="line"> napi_status status;</span><br><span class="line"> <span class="comment">// 创建与 AsyncResource 绑定的 ThreadSafe Function</span></span><br><span class="line"> napi_threadsafe_function tsfn;</span><br><span class="line"> status = <span class="title function_">napi_create_threadsafe_function</span>(env,</span><br><span class="line">                                          func,</span><br><span class="line">                                          async_resource,</span><br><span class="line">                                          async_resource_name,</span><br><span class="line">                                          max_queue_size,</span><br><span class="line">                                          initial_thread_count,</span><br><span class="line">                                          finalize_data,</span><br><span class="line">                                          finalize_cb,</span><br><span class="line">                                          context,</span><br><span class="line">                                          call_js_cb,</span><br><span class="line">                                          &amp;tsfn);</span><br><span class="line"> <span class="title function_">assert</span>(status == napi_ok);</span><br><span class="line"></span><br><span class="line"> <span class="comment">// 创建工作线程</span></span><br><span class="line"> <span class="title function_">create_worker</span>(tsfn, <span class="comment">/** 其他参数 */</span>);</span><br><span class="line"></span><br><span class="line"> <span class="comment">// 返回 JavaScript 值..</span></span><br><span class="line"> napi_value ret;</span><br><span class="line"> status = <span class="title function_">napi_get_null</span>(env, &amp;ret);</span><br><span class="line"> <span class="title function_">assert</span>(status == napi_ok);</span><br><span class="line"> <span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="使用场景"><a href="#使用场景" class="headerlink" title="使用场景"></a>使用场景</h2><h3 id="异步任务调度"><a href="#异步任务调度" class="headerlink" title="异步任务调度"></a>异步任务调度</h3><p>在单元测试中，如果我们使用了异步任务，一个可能比较常见的场景就是这个异步任务可能会泄漏出我们的测试函数执行桢导致我们后续无法追踪、或者影响了后续的测试结果。</p>
+<p>我们来看一个例子：</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="title function_">it</span>(<span class="string">&#x27;should wait for async test&#x27;</span>, <span class="function">() =&gt;</span> &#123;</span><br><span class="line"> <span class="built_in">setTimeout</span>(<span class="function">() =&gt;</span> &#123;</span><br><span class="line">   <span class="title class_">Promise</span>.<span class="title function_">resolve</span>(<span class="number">0</span>).<span class="title function_">then</span>(<span class="function">() =&gt;</span> &#123;</span><br><span class="line">     <span class="comment">// only after this code executes will the test complete.</span></span><br><span class="line">     <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;wait for me&#x27;</span>));</span><br><span class="line">  &#125;</span><br><span class="line">&#125;, <span class="number">0</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>在这个例子中，我们可以看到其中 setTimeout 逃逸出了测试执行桢，从而导致测试提早结束，并且可能影响后续测试任务的运行（比如在 setTimeout 中抛出了异常）。现在我们可以通过将全部的方法都使用 callback、promise 给串起来，但是这毕竟需要开发者自行去完成，并且可能出现疏漏，还是会出现例子中的情况。那么我们有没有可能从语言运行时层面提供一个“完美”的方案来跟踪所有的异步任务呢？通过 <code>async_hooks</code> 的异步资源追踪能力，我们就可以标记所有在测试执行过程中创建的异步资源，如果在测试执行结束后，还存在未销毁的异步资源，就可以更早地将问题暴露。</p>
+<p>如我们有下面这个例子：</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">const</span> assert = <span class="built_in">require</span>(<span class="string">&#x27;assert&#x27;</span>);</span><br><span class="line"><span class="keyword">const</span> &#123;createHook, <span class="title class_">AsyncLocalStorage</span>&#125; = <span class="built_in">require</span>(<span class="string">&#x27;async_hooks&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> als = <span class="keyword">new</span> <span class="title class_">AsyncLocalStorage</span>();</span><br><span class="line"><span class="keyword">const</span> backlog = <span class="keyword">new</span> <span class="title class_">Map</span>();</span><br><span class="line"><span class="title function_">createHook</span>(&#123;</span><br><span class="line"> init (asyncId, type, triggerAsyncId, resource) &#123;</span><br><span class="line">   <span class="keyword">const</span> test = als.<span class="title function_">getStore</span>();</span><br><span class="line">   <span class="keyword">if</span> (test == <span class="literal">null</span>) &#123;</span><br><span class="line">     <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">   backlog.<span class="title function_">set</span>(asyncId, &#123; type, triggerAsyncId, resource &#125;);</span><br><span class="line">&#125;,</span><br><span class="line"> destroy (asyncId) &#123;</span><br><span class="line">   backlog.<span class="title function_">delete</span>(asyncId);</span><br><span class="line">&#125;,</span><br><span class="line"> promiseResolve (asyncId) &#123;</span><br><span class="line">   backlog.<span class="title function_">delete</span>(asyncId);</span><br><span class="line">&#125;</span><br><span class="line">&#125;).<span class="title function_">enable</span>();</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> queue = []</span><br><span class="line"><span class="keyword">function</span> <span class="title function_">test</span>(<span class="params">name, callback</span>) &#123;</span><br><span class="line"> queue.<span class="title function_">push</span>(&#123; name, callback &#125;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">run</span>(<span class="params"></span>) &#123;</span><br><span class="line"> <span class="keyword">if</span> (queue.<span class="property">length</span> === <span class="number">0</span>) &#123;</span><br><span class="line">   <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br><span class="line"> <span class="keyword">const</span> &#123; name, callback &#125; = queue.<span class="title function_">pop</span>();</span><br><span class="line"> als.<span class="title function_">run</span>(name, <span class="keyword">async</span> () =&gt; &#123;</span><br><span class="line">   <span class="keyword">try</span> &#123;</span><br><span class="line">     <span class="keyword">await</span> <span class="title function_">callback</span>();</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">     als.<span class="title function_">exit</span>(<span class="function">() =&gt;</span> &#123;</span><br><span class="line">       <span class="title function_">setImmediate</span>(<span class="function">() =&gt;</span> &#123;</span><br><span class="line">         <span class="title function_">assert</span>(backlog.<span class="property">size</span> === <span class="number">0</span>, <span class="string">`&#x27;<span class="subst">$&#123;name&#125;</span>&#x27; ended with dangling async tasks.`</span>);</span><br><span class="line">         <span class="title function_">run</span>();</span><br><span class="line">      &#125;);</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br><span class="line">&#125;</span><br><span class="line">process.<span class="title function_">nextTick</span>(run);</span><br><span class="line"></span><br><span class="line"><span class="comment">/** 测试声明开始 */</span></span><br><span class="line"><span class="title function_">test</span>(<span class="string">&#x27;foo&#x27;</span>, <span class="keyword">async</span> () =&gt; &#123;</span><br><span class="line"> <span class="keyword">await</span> <span class="keyword">new</span> <span class="title class_">Promise</span>(<span class="function"><span class="params">res</span> =&gt;</span> <span class="built_in">setTimeout</span>(res, <span class="number">100</span>));</span><br><span class="line"> <span class="comment">// Pass.</span></span><br><span class="line">&#125;);</span><br><span class="line"><span class="title function_">test</span>(<span class="string">&#x27;bar&#x27;</span>, <span class="keyword">async</span> () =&gt; &#123;</span><br><span class="line"> <span class="built_in">setTimeout</span>(res, <span class="number">100</span>);</span><br><span class="line"> <span class="comment">// Assert Failed =&gt; &#x27;bar&#x27; ended with dangling async tasks.</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>在这个例子中，每一次测试开始执行前，我们都会在为测试运行注册一个异步特有数据存储，然后再开始执行测试，这样在测试中发起的所有异步资源都会被 <code>async_hooks</code> 捕捉到并被测试模块标记，直到这个异步资源被销毁（或者是 Promise Resolve）。随后在测试结束后，我们再检查当前测试是否有遗留的异步资源，即可确认我们的测试是干净无残留的。</p>
+<h3 id="异步调用栈-性能诊断"><a href="#异步调用栈-性能诊断" class="headerlink" title="异步调用栈/性能诊断"></a>异步调用栈/性能诊断</h3><p>这也是我们开头的问题。</p>
+<p>在越来越多大型的项目使用 Node.js 作为研发技术栈后，开发者们也会越来越关注问题的诊断便捷性。除了异常错误排查，现在我们也可以通过 Chrome DevTools 的 CPU Profiler 亦或者是生成火焰图来诊断我们的 Node.js 应用性能表现，但是这些工具现在更多的是只能查看某一个函数在单个同步执行桢中的调用链路与时间占用比例，并没有能力将一个异步链路上每一个异步操作所花费的时间与百分比描绘出来。</p>
+<p>而在能够串联异步链路中的异步调用栈之后，后续我们也可以在开发中使用更加直观的性能剖析工具：</p>
+<p><img src="https://pic-1257960926.cos.ap-guangzhou.myqcloud.com/blog/640.jpg" alt="640"></p>
+<p>或者是提供线上的请求链路追踪能力，就如同现在各种成熟 APM 提供的应用间 RPC 调用链路一样，我们同样也可以绘制出应用内一个请求到底经历了什么流程，每一步分别花费了多少时间：</p>
+<p><img src="https://pic-1257960926.cos.ap-guangzhou.myqcloud.com/blog/640-20200925131314743.jpg" alt="640-20200925131314743"></p>
+<h3 id="AsyncLocalStorage"><a href="#AsyncLocalStorage" class="headerlink" title="AsyncLocalStorage"></a>AsyncLocalStorage</h3><p>使用线程作为处理单元的模型中，我们可以使用 ThreadLocal 来存储对于当前线程特有的数据信息，那么在 Node.js 的异步模型中，我们有什么办法可以方便地存储对于当前异步任务来说特有的数据信息呢？</p>
+<p>Node.js 在 3 月 4 日发行的 v13.10.0 版本第一次发布了 <code>async_hooks.AsyncLocalStorage</code>，可以在异步回调或者 <code>Promise</code> 中获取异步调用的状态信息，比如 HTTP 服务器在处理请求的异步链路中的任意一步都可以访问对于这个请求而言专有的数据。</p>
+<h2 id="后续"><a href="#后续" class="headerlink" title="后续"></a>后续</h2><p>除了在 Node.js 中我们需要清晰的异步执行模型的定义之外，同样提供了 JavaScript 执行环境的浏览器中在 JavaScript 项目日渐复杂之后同样也需要更能描写异步时间线的诊断能力。除此之外，其实 Node.js 的 <code>async_hooks</code> 接口本身并不容易被更多的用户所使用，他暴露了异步资源非常底层的属性，虽然这些接口能够准确描述我们的异步资源，但是想要利用好这些接口并不简单。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="https://www.scery.com">HaoDong Wu</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://www.scery.com/Node-js%E5%BC%82%E6%AD%A5%E5%BB%B6%E7%BB%AD%E6%A8%A1%E5%9E%8B.htm">https://www.scery.com/Node-js%E5%BC%82%E6%AD%A5%E5%BB%B6%E7%BB%AD%E6%A8%A1%E5%9E%8B.htm</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://www.scery.com" target="_blank">Anthony's Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Linux/">Linux</a><a class="post-meta__tags" href="/tags/Nodejs/">Nodejs</a><a class="post-meta__tags" href="/tags/%E5%BC%82%E6%AD%A5%E5%BB%B6%E7%BB%AD%E6%A8%A1%E5%9E%8B/">异步延续模型</a></div><div class="post_share"><div class="social-share" data-image="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/hping3%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85%E5%92%8C%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95.htm"><img class="prev-cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Hping3编译安装和使用方法</div></div></a></div><div class="next-post pull-right"><a href="/Nodejs%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86%E6%96%B9%E5%BC%8F.htm"><img class="next-cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Nodejs异常处理方式</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/Nodejs%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86%E6%96%B9%E5%BC%8F.htm" title="Nodejs异常处理方式"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2020-08-23</div><div class="title">Nodejs异常处理方式</div></div></a></div><div><a href="/Nodejs%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE.htm" title="Nodejs环境配置"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2019-03-01</div><div class="title">Nodejs环境配置</div></div></a></div><div><a href="/Nodejs%E6%93%8D%E4%BD%9CMongoDB.htm" title="Nodejs操作MongoDB"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2019-03-01</div><div class="title">Nodejs操作MongoDB</div></div></a></div><div><a href="/Centos7_firewalld.htm" title="Centos7_firewalld"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2019-02-20</div><div class="title">Centos7_firewalld</div></div></a></div><div><a href="/Centos7%E5%AE%89%E8%A3%85mysql8.0.htm" title="Centos7安装mysql8.0和日常命令"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2019-02-20</div><div class="title">Centos7安装mysql8.0和日常命令</div></div></a></div><div><a href="/MongoDB%E5%BF%98%E8%AE%B0%E5%AF%86%E7%A0%81.htm" title="MongoDB重置密码"><img class="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2019-03-26</div><div class="title">MongoDB重置密码</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="/img/avatar.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">HaoDong Wu</div><div class="author-info__description">Email: i@scery.com</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">38</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">55</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">60</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/Anthonyfhd"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/Anthonyfhd" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="wuhaodong:i@scery.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a><a class="social-icon" href="https://instagram.com/anthony.hd.wu" target="_blank" title="fab fa-instagram"><i class="fab fa-instagram"></i></a><a class="social-icon" href="https://weibo.com/u/5730157238" target="_blank" title="z"><i class="fab fa-weibo"></i></a><a class="social-icon" href="https://www.youtube.com/channel/UCpge3BwaMrOjFVMmSR8Scpw" target="_blank" title="fab fa-youtube"><i class="fab fa-youtube"></i></a><a class="social-icon" href="https://www.facebook.com/wu.hd.5" target="_blank" title="fab fa-facebook"><i class="fab fa-facebook"></i></a><a class="social-icon" href="https://twitter.com/2522945717Hd" target="_blank" title="fab fa-twitter"><i class="fab fa-twitter"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">I am a slow walker,but I never walk backwards.</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Node-js%E5%BC%82%E6%AD%A5%E5%BB%B6%E7%BB%AD%E6%A8%A1%E5%9E%8B"><span class="toc-number">1.</span> <span class="toc-text">Node.js异步延续模型</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%82%E6%AD%A5%E5%BB%B6%E7%BB%AD%E6%A8%A1%E5%9E%8B"><span class="toc-number">1.1.</span> <span class="toc-text">异步延续模型</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#async-hooks"><span class="toc-number">1.1.1.</span> <span class="toc-text">async_hooks</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8E-domain-%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-number">1.1.2.</span> <span class="toc-text">与 domain 的区别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Node-js-Add-on-%E7%9A%84%E5%85%BC%E5%AE%B9%E6%80%A7"><span class="toc-number">1.1.3.</span> <span class="toc-text">Node.js Add-on 的兼容性</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-number">1.2.</span> <span class="toc-text">使用场景</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BC%82%E6%AD%A5%E4%BB%BB%E5%8A%A1%E8%B0%83%E5%BA%A6"><span class="toc-number">1.2.1.</span> <span class="toc-text">异步任务调度</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BC%82%E6%AD%A5%E8%B0%83%E7%94%A8%E6%A0%88-%E6%80%A7%E8%83%BD%E8%AF%8A%E6%96%AD"><span class="toc-number">1.2.2.</span> <span class="toc-text">异步调用栈&#x2F;性能诊断</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#AsyncLocalStorage"><span class="toc-number">1.2.3.</span> <span class="toc-text">AsyncLocalStorage</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%90%8E%E7%BB%AD"><span class="toc-number">1.3.</span> <span class="toc-text">后续</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/hping3%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85%E5%92%8C%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95.htm" title="Hping3编译安装和使用方法">Hping3编译安装和使用方法</a><time datetime="2021-03-01T00:19:43.000Z" title="发表于 2021-03-01 08:19:43">2021-03-01</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/Node-js%E5%BC%82%E6%AD%A5%E5%BB%B6%E7%BB%AD%E6%A8%A1%E5%9E%8B.htm" title="Nodejs异步延续模型">Nodejs异步延续模型</a><time datetime="2020-09-25T00:16:25.000Z" title="发表于 2020-09-25 08:16:25">2020-09-25</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/Nodejs%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86%E6%96%B9%E5%BC%8F.htm" title="Nodejs异常处理方式">Nodejs异常处理方式</a><time datetime="2020-08-23T07:36:59.000Z" title="发表于 2020-08-23 15:36:59">2020-08-23</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/MongoDB%E9%9B%86%E7%BE%A4-%E5%89%AF%E6%9C%AC%E9%9B%86.htm" title="MongoDB集群-副本集">MongoDB集群-副本集</a><time datetime="2020-07-30T13:43:04.000Z" title="发表于 2020-07-30 21:43:04">2020-07-30</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/MongoDB%E6%80%BB%E7%BB%93.htm" title="MongoDB总结">MongoDB总结</a><time datetime="2020-07-29T13:50:16.000Z" title="发表于 2020-07-29 21:50:16">2020-07-29</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2022 By HaoDong Wu</div><div class="framework-info"></div><div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备19129143号-2 </a>
+<img src="/images/beian.png" style="display: inline-block;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=none" rel="noopener" target="_blank">粤公网安备号 </a>
+</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="is-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据库加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div id="local-search-results"></div></div></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="/js/search/local-search.js"></script><script>var preloader = {
+  endLoading: () => {
+    document.body.style.overflow = 'auto';
+    document.getElementById('loading-box').classList.add("loaded")
+  },
+  initLoading: () => {
+    document.body.style.overflow = '';
+    document.getElementById('loading-box').classList.remove("loaded")
+
+  }
+}
+window.addEventListener('load',preloader.endLoading())</script><div class="js-pjax"><script>if (!window.MathJax) {
+  window.MathJax = {
+    tex: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]],
+      tags: 'ams'
+    },
+    chtml: {
+      scale: 1.2
+    },
+    options: {
+      renderActions: {
+        findScript: [10, doc => {
+          for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+            const display = !!node.type.match(/; *mode=display/)
+            const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+            const text = document.createTextNode('')
+            node.parentNode.replaceChild(text, node)
+            math.start = {node: text, delim: '', n: 0}
+            math.end = {node: text, delim: '', n: 0}
+            doc.math.push(math)
+          }
+        }, ''],
+        insertScript: [200, () => {
+          document.querySelectorAll('mjx-container:not\([display]\)').forEach(node => {
+            const target = node.parentNode
+            if (target.nodeName.toLowerCase() === 'li') {
+              target.parentNode.classList.add('has-jax')
+            } else {
+              target.classList.add('has-jax')
+            }
+          });
+        }, '', false]
+      }
+    }
+  }
+  
+  const script = document.createElement('script')
+  script.src = 'https://cdn.jsdelivr.net/npm/mathjax/es5/tex-mml-chtml.min.js'
+  script.id = 'MathJax-script'
+  script.async = true
+  document.head.appendChild(script)
+} else {
+  MathJax.startup.document.state(0)
+  MathJax.texReset()
+  MathJax.typeset()
+}</script><script>function loadValine () {
+  function initValine () {
+    const valine = new Valine(Object.assign({
+      el: '#vcomment',
+      appId: 'UTUTplsfdeKMm93ipK1KpyBl-9Nh9j0Va',
+      appKey: 'btOv8iYRxDBydGmQDfDxpfYf',
+      avatar: 'monsterid',
+      serverURLs: '',
+      emojiMaps: "",
+      path: window.location.pathname,
+      visitor: false
+    }, null))
+  }
+
+  if (typeof Valine === 'function') initValine() 
+  else getScript('https://cdn.jsdelivr.net/npm/valine/dist/Valine.min.js').then(initValine)
+}
+
+if ('Valine' === 'Valine' || !true) {
+  if (true) btf.loadComment(document.getElementById('vcomment'),loadValine)
+  else setTimeout(loadValine, 0)
+} else {
+  function loadOtherComment () {
+    loadValine()
+  }
+}</script></div><canvas class="fireworks" mobile="false"></canvas><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/fireworks.min.js"></script><script defer="defer" id="fluttering_ribbon" mobile="false" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/canvas-fluttering-ribbon.min.js"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
