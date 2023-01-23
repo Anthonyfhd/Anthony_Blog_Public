@@ -1203,35 +1203,6 @@
     
     
     <entry>
-      <title>Nginx配置PHP</title>
-      <link href="/nginx%E9%85%8D%E7%BD%AEphp.htm"/>
-      <url>/nginx%E9%85%8D%E7%BD%AEphp.htm</url>
-      
-        <content type="html"><![CDATA[<h1 id="Nginx配置PHP"><a href="#Nginx配置PHP" class="headerlink" title="Nginx配置PHP"></a>Nginx配置PHP</h1><p>因为centos7内置的源php为5.4老版本，先更换yum源</p><figure class="highlight awk"><table><tr><td class="code"><pre><span class="line">yum install epel-release</span><br><span class="line">rpm -Uvh https:<span class="regexp">//</span>dl.fedoraproject.org<span class="regexp">/pub/</span>epel/epel-release-latest-<span class="number">7</span>.noarch.rpm</span><br><span class="line">rpm -Uvh https:<span class="regexp">//mi</span>rror.webtatic.com<span class="regexp">/yum/</span>el7/webtatic-release.rpm</span><br></pre></td></tr></table></figure><p>如果已经安装了旧版本先完全删除后再安装</p><figure class="highlight smali"><table><tr><td class="code"><pre><span class="line">yum -y install php72w php72w-cli php72w-common php72w-devel php72w-embedded php72w-fpm php72w-gd php72w-mbstring php72w-mysqlnd php72w-opcache php72w-pdo php72w-xml</span><br></pre></td></tr></table></figure><p>在nginx的conf文件配置如下</p><figure class="highlight nginx"><table><tr><td class="code"><pre><span class="line"><span class="section">location</span> <span class="regexp">~ [^/]\.php(/|$)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="comment">#comment try_files $uri = 404;to enable pathinfo try_files $uri = 404;</span></span><br><span class="line">        <span class="attribute">fastcgi_pass</span> <span class="number">127.0.0.1:9000</span>;</span><br><span class="line">        <span class="attribute">fastcgi_index</span> index.php;</span><br><span class="line">        <span class="comment">#include fastcgi.conf;#include pathinfo.conf;</span></span><br><span class="line">        <span class="attribute">include</span> fastcgi_params;</span><br><span class="line">        <span class="attribute">set</span> <span class="variable">$real_script_name</span> <span class="variable">$fastcgi_script_name</span>;</span><br><span class="line">        <span class="attribute">if</span> (<span class="variable">$fastcgi_script_name</span> <span class="regexp">~ &quot;^(.+?\.php)(/.+)$&quot;)</span>&#123;</span><br><span class="line">                <span class="attribute">set</span> <span class="variable">$real_script_name</span> <span class="variable">$1</span>;</span><br><span class="line">                <span class="attribute">set</span> <span class="variable">$path_info</span> <span class="variable">$2</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="attribute">fastcgi_param</span> SCRIPT_FILENAME <span class="variable">$document_root</span><span class="variable">$real_script_name</span>;</span><br><span class="line">        <span class="attribute">fastcgi_param</span> SCRIPT_NAME <span class="variable">$real_script_name</span>;</span><br><span class="line">        <span class="attribute">fastcgi_param</span> PATH_INFO <span class="variable">$path_info</span>;</span><br><span class="line">        <span class="attribute">fastcgi_param</span> APPLICATION_ENV <span class="string">&#x27;development&#x27;</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>]]></content>
-      
-      
-      <categories>
-          
-          <category> Linux </category>
-          
-          <category> Firewall </category>
-          
-      </categories>
-      
-      
-        <tags>
-            
-            <tag> Linux </tag>
-            
-            <tag> Firewall </tag>
-            
-        </tags>
-      
-    </entry>
-    
-    
-    
-    <entry>
       <title>Nginx安装和编译</title>
       <link href="/nginx%E5%AE%89%E8%A3%85%E5%92%8C%E7%BC%96%E8%AF%91.htm"/>
       <url>/nginx%E5%AE%89%E8%A3%85%E5%92%8C%E7%BC%96%E8%AF%91.htm</url>
@@ -1259,6 +1230,35 @@
             <tag> Service </tag>
             
             <tag> Nginx </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>Nginx配置PHP</title>
+      <link href="/nginx%E9%85%8D%E7%BD%AEphp.htm"/>
+      <url>/nginx%E9%85%8D%E7%BD%AEphp.htm</url>
+      
+        <content type="html"><![CDATA[<h1 id="Nginx配置PHP"><a href="#Nginx配置PHP" class="headerlink" title="Nginx配置PHP"></a>Nginx配置PHP</h1><p>因为centos7内置的源php为5.4老版本，先更换yum源</p><figure class="highlight awk"><table><tr><td class="code"><pre><span class="line">yum install epel-release</span><br><span class="line">rpm -Uvh https:<span class="regexp">//</span>dl.fedoraproject.org<span class="regexp">/pub/</span>epel/epel-release-latest-<span class="number">7</span>.noarch.rpm</span><br><span class="line">rpm -Uvh https:<span class="regexp">//mi</span>rror.webtatic.com<span class="regexp">/yum/</span>el7/webtatic-release.rpm</span><br></pre></td></tr></table></figure><p>如果已经安装了旧版本先完全删除后再安装</p><figure class="highlight smali"><table><tr><td class="code"><pre><span class="line">yum -y install php72w php72w-cli php72w-common php72w-devel php72w-embedded php72w-fpm php72w-gd php72w-mbstring php72w-mysqlnd php72w-opcache php72w-pdo php72w-xml</span><br></pre></td></tr></table></figure><p>在nginx的conf文件配置如下</p><figure class="highlight nginx"><table><tr><td class="code"><pre><span class="line"><span class="section">location</span> <span class="regexp">~ [^/]\.php(/|$)</span></span><br><span class="line">&#123;</span><br><span class="line">        <span class="comment">#comment try_files $uri = 404;to enable pathinfo try_files $uri = 404;</span></span><br><span class="line">        <span class="attribute">fastcgi_pass</span> <span class="number">127.0.0.1:9000</span>;</span><br><span class="line">        <span class="attribute">fastcgi_index</span> index.php;</span><br><span class="line">        <span class="comment">#include fastcgi.conf;#include pathinfo.conf;</span></span><br><span class="line">        <span class="attribute">include</span> fastcgi_params;</span><br><span class="line">        <span class="attribute">set</span> <span class="variable">$real_script_name</span> <span class="variable">$fastcgi_script_name</span>;</span><br><span class="line">        <span class="attribute">if</span> (<span class="variable">$fastcgi_script_name</span> <span class="regexp">~ &quot;^(.+?\.php)(/.+)$&quot;)</span>&#123;</span><br><span class="line">                <span class="attribute">set</span> <span class="variable">$real_script_name</span> <span class="variable">$1</span>;</span><br><span class="line">                <span class="attribute">set</span> <span class="variable">$path_info</span> <span class="variable">$2</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="attribute">fastcgi_param</span> SCRIPT_FILENAME <span class="variable">$document_root</span><span class="variable">$real_script_name</span>;</span><br><span class="line">        <span class="attribute">fastcgi_param</span> SCRIPT_NAME <span class="variable">$real_script_name</span>;</span><br><span class="line">        <span class="attribute">fastcgi_param</span> PATH_INFO <span class="variable">$path_info</span>;</span><br><span class="line">        <span class="attribute">fastcgi_param</span> APPLICATION_ENV <span class="string">&#x27;development&#x27;</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>]]></content>
+      
+      
+      <categories>
+          
+          <category> Linux </category>
+          
+          <category> Firewall </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> Linux </tag>
+            
+            <tag> Firewall </tag>
             
         </tags>
       
