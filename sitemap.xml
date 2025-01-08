@@ -20,7 +20,7 @@
   </url>
   
   <url>
-    <loc>https://www.scery.com/%E7%BB%84%E4%BC%9A/%E6%9C%AA%E5%91%BD%E5%90%8D.htm</loc>
+    <loc>https://www.scery.com/%E7%BB%84%E4%BC%9A/20241223%E7%BB%84%E4%BC%9A.htm</loc>
     
     <lastmod>2024-12-23</lastmod>
     
@@ -194,6 +194,15 @@
     <loc>https://www.scery.com/%E7%BB%84%E4%BC%9A/20241202%E7%BB%84%E4%BC%9A.htm</loc>
     
     <lastmod>2024-12-02</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://www.scery.com/2024-09-30.htm</loc>
+    
+    <lastmod>2024-09-29</lastmod>
     
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
